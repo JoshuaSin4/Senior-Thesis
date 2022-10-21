@@ -1,4 +1,16 @@
 # ---> Python
+# Klein defined
+*.pyc
+*.npz
+*.png
+*.out 
+job.sh
+result*
+*.trace.json
+*.pot
+*.dat
+*.prof
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
