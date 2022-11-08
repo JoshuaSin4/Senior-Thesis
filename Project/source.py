@@ -93,8 +93,6 @@ class SNN():
             # store loss value
             loss_hist.append(loss_val.item())
 
-        return loss_hist 
-
     def plot_voltage_traces(self, mem, spk=None, dim=(3,5), spike_height=5):
         gs=GridSpec(*dim)
         if spk is not None:
@@ -109,11 +107,11 @@ class SNN():
             ax.plot(dat[i])
             ax.axis("off")
 
-    def print_classification_accuracy(self):
-        output,_ = self.run_snn(x_data)
+    def print_classification_accuracy(self, inputs, target,device,dtype, **kwargs):
+        output,_ = self.run_snn(inputs, device, dtype, **kwargs)
         m,_= torch.max(output,1) # max over time
         _,am=torch.max(m,1) # argmax over output units
-        acc = np.mean((y_data==am).detach().cpu().numpy()) # compare to labels
+        acc = np.mean((target==am).detach().cpu().numpy()) # compare to labels
         print("Accuracy %.3f"%acc)
 
 class SurrGradSpike(torch.autograd.Function):
