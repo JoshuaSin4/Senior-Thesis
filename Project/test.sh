@@ -1,2 +1,3 @@
-export PATH=$PATH:/Users/user/Senior-Thesis/Project/
+#!/bin/bash
+
 python /Users/user/Senior-Thesis/Project/exe.py

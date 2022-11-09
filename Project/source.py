@@ -113,6 +113,7 @@ class SNN():
         _,am=torch.max(m,1) # argmax over output units
         acc = np.mean((target==am).detach().cpu().numpy()) # compare to labels
         print("Accuracy %.3f"%acc)
+        return acc
 
 class SurrGradSpike(torch.autograd.Function):
     """

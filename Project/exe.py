@@ -21,8 +21,6 @@ wparams['alpha']   = float(np.exp(-time_step/tau_syn))
 wparams['beta']    = float(np.exp(-time_step/tau_mem))
 
 
-snn100 = SNN(device, dtype, **wparams)
-
 freq = 5 # Firing Rate
 prob = freq*time_step # Probability
 mask = torch.rand((wparams['batch_size'],wparams['nb_steps'],wparams['nb_inputs']), device=device, dtype=dtype)
@@ -31,20 +29,24 @@ x_data[mask<prob] = 1.0 # Tensor filled wit spikes
 
 y_data = torch.tensor(1*(np.random.rand(wparams['batch_size'])<0.5), device=device, dtype = torch.long)
 
-snn100.spike_fn = SurrGradSpike.apply
-
-betas = np.arange(0,1,0.1)
+betas = np.arange(0,1,0.01)
 accuracy_list = []
 std_list = []
 
 for i in betas:
-    snn100.weight_scale = 7.0*(1-i)
+    wparams['beta'] = i
+    snn100 = SNN(device, dtype, **wparams)
+    snn100.spike_fn = SurrGradSpike.apply
     snn100.optimize_loss_function(x_data, y_data, device, dtype, **wparams)
     accuracy = snn100.print_classification_accuracy(x_data, y_data, device, dtype, **wparams)
     std=(snn100.weight_scale)/np.sqrt(wparams['nb_inputs'])
-    print(std)
+    print(snn100.weight_scale)
     accuracy_list.append(accuracy)
     std_list.append(std)
 
-plt.scatter(np.array(std_list), np.array(accuracy_list))
+fig, ax = plt.subplots()
+ax.plot(np.array(std_list), np.array(accuracy_list) , marker ='o')
+ax.set_xlabel("Standard Deviation")
+ax.set_ylabel("Accuracy")
+ax.set_title("Accuracy vs. Standard Deviation")
 plt.show()
