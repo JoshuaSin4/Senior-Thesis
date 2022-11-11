@@ -2,7 +2,6 @@
 # Klein defined
 *.pyc
 *.npz
-*.png
 *.out 
 job.sh
 result*
