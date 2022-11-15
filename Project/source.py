@@ -16,13 +16,8 @@ class SNN():
         self.weight_scale = 7*(1.0-kwargs['beta']) # this should give us some spikes to begin with
         
         self.w1 = torch.empty((kwargs['nb_inputs'], kwargs['nb_hidden']),  device=device, dtype=dtype, requires_grad=True)
-        torch.nn.init.normal_(self.w1, mean=0.0, std=self.weight_scale/np.sqrt(kwargs['nb_inputs']))
-        #torch.nn.init.uniform_(self.w1, a=-self.weight_scale/np.sqrt(kwargs['nb_inputs']), b=self.weight_scale/np.sqrt(kwargs['nb_inputs']))
-        #torch.nn.init.xavier_uniform_(self.w1)
-        self.w2 = torch.empty((kwargs['nb_hidden'], kwargs['nb_outputs']), device=device, dtype=dtype, requires_grad=True)
-        torch.nn.init.normal_(self.w2, mean=0.0, std=self.weight_scale/np.sqrt(kwargs['nb_hidden']))
-        #torch.nn.init.uniform_(self.w2, a=-self.weight_scale/np.sqrt(kwargs['nb_hidden']), b = self.weight_scale/np.sqrt(kwargs['nb_hidden']))
-        #torch.nn.init.xavier_uniform_(self.w2)
+        
+        self.w2 = torch.empty((kwargs['nb_hidden'], kwargs['nb_outputs']), device=device, dtype=dtype, requires_grad=True)        
 
     def spike_fn(self, x):
         out = torch.zeros_like(x)
@@ -73,42 +68,13 @@ class SNN():
         other_recs = [mem_rec, spk_rec]
         return out_rec, other_recs
     
-    def optimize_loss_function(self,inputs, target, device, dtype, **kwargs):
+    def init_train(self, **kwargs):
+        torch.nn.init.normal_(self.w1, mean=0.0, std=self.weight_scale/np.sqrt(kwargs['nb_inputs']))
+        torch.nn.init.normal_(self.w2, mean=0.0, std=self.weight_scale/np.sqrt(kwargs['nb_hidden']))
         params = [self.w1,self.w2] # The paramters we want to optimize
         optimizer = torch.optim.Adam(params, lr=2e-3, betas=(0.9,0.999)) # The optimizer we are going to use
-        log_softmax_fn = nn.LogSoftmax(dim=1) # The log softmax function across output units
-        loss_fn = nn.NLLLoss() # The negative log likelihood loss function
-        # The optimization loop
-        loss_hist = []
-        for e in range(1000):
-            # run the network and get output
-            output,_ = self.run_snn(inputs, device, dtype, **kwargs) 
-            # compute the loss
-            m,_=torch.max(output,1) # maximum of the potential
-            log_p_y = log_softmax_fn(m) # softmax
-            loss_val = loss_fn(log_p_y, target)
-
-            # update the weights
-            optimizer.zero_grad()
-            loss_val.backward()
-            optimizer.step()
-            
-            # store loss value
-            loss_hist.append(loss_val.item())
-
-    def plot_voltage_traces(self, mem, spk=None, dim=(3,5), spike_height=5):
-        gs=GridSpec(*dim)
-        if spk is not None:
-            dat = 1.0*mem
-            dat[spk>0.0] = spike_height
-            dat = dat.detach().cpu().numpy()
-        else:
-            dat = mem.detach().cpu().numpy()
-        for i in range(np.prod(dim)):
-            if i==0: a0=ax=plt.subplot(gs[i])
-            else: ax=plt.subplot(gs[i],sharey=a0)
-            ax.plot(dat[i])
-            ax.axis("off")
+        return optimizer
+        
 
     def print_classification_accuracy(self, inputs, target,device,dtype, **kwargs):
         output,_ = self.run_snn(inputs, device, dtype, **kwargs)
