@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python /Users/user/Senior-Thesis/Project/exe.py 30
+python3 exe.py 10

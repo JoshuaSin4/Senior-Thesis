@@ -12,7 +12,7 @@ ini_time_for_now = datetime.now()
 print ('initial_date:', str(ini_time_for_now))
 
 dtype = torch.float
-device = torch.device("cuda")
+device = torch.device("cpu")
 
 time_step = 1e-3
 tau_mem = 10e-3
@@ -26,34 +26,35 @@ wparams['nb_hidden']  = 4
 wparams['nb_outputs'] = 2
 wparams['batch_size'] = 256
 wparams['alpha']   = float(np.exp(-time_step/tau_syn))
-wparams['beta']    = float(np.exp(-time_step/tau_mem))
+wparams['beta']    = float(np.exp(-time_step/tau_mem))    
+wparams['sample'] = 42
 
 # Input Data
 freq = 5 # Firing Rate
 prob = freq*time_step # Probability
-mask = torch.rand((wparams['batch_size'],wparams['nb_steps'],wparams['nb_inputs']), device=device, dtype=dtype)
-x_data = torch.zeros((wparams['batch_size'],wparams['nb_steps'],wparams['nb_inputs']), device=device, dtype=dtype, requires_grad=False)
-x_data[mask<prob] = 1.0 # Tensor filled wit spikes
-y_data = torch.tensor(1*(np.random.rand(wparams['batch_size'])<0.5), device=device, dtype = torch.long)
-
-snn = SNN(device, dtype, **wparams)
-snn.spike_fn = SurrGradSpike.apply
 
 epoch = 1000
+average_std_list = []
 std_average_list = []
-betas = np.arange(0,1,0.1)
+betas = np.arange(0, 1,0.2)
 sample_list = int(sys.argv[1])
-nb_list = np.arange(10,101, 20)
+sampling = np.arange(0, 10*sample_list, 10)
+nb_list = np.arange(80,401, 100)
 std_mean_graph = []
 std_std_graph = []
 
 # Main Loop
 for nb_inputs in nb_list:
     wparams['nb_inputs'] = nb_inputs
+    mask = torch.rand((wparams['batch_size'],wparams['nb_steps'],wparams['nb_inputs']), device=device, dtype=dtype)
+    x_data = torch.zeros((wparams['batch_size'],wparams['nb_steps'],wparams['nb_inputs']), device=device, dtype=dtype, requires_grad=False)
+    x_data[mask<prob] = 1.0 # Tensor filled wit spikes
+    y_data = torch.tensor(1*(np.random.rand(wparams['batch_size'])<0.5), device=device, dtype = torch.long)
     # Finding the mean of std. dev. for one point
-    for sample in range(sample_list):
-        np.random.seed(sample)
-        torch.manual_seed(sample+256)
+    for sample in sampling:
+        wparams['sample'] = sample
+        snn = SNN(device, dtype, **wparams)
+        snn.spike_fn = SurrGradSpike.apply
         std_list = []
         accuracy_list = []
         # Finding the best std dev for each sample
@@ -62,7 +63,6 @@ for nb_inputs in nb_list:
             optimizer = snn.init_train(**wparams)
             log_softmax_fn = nn.LogSoftmax(dim=1) # The log softmax function across output units
             loss_fn = nn.NLLLoss() # The negative log likelihood loss function
-            loss_hist = []
             # Training the network
             for e in range(epoch):
                 # run the network and get output
@@ -77,19 +77,15 @@ for nb_inputs in nb_list:
                 loss_val.backward()
                 optimizer.step()
                 
-                # store loss value
-                loss_hist.append(loss_val.item())
-
             accuracy = snn.print_classification_accuracy(x_data, y_data, device, dtype, **wparams)
-            std=(snn.weight_scale)/np.sqrt(nb_inputs)
             accuracy_list.append(accuracy)
-            std_list.append(std)
+            std_list.append(beta)
 
         best_std = std_list[np.argmax(accuracy_list)]
-        std_average_list.append(best_std)
-            
-    std_mean = np.mean(std_average_list)
-    std_std = np.std(std_average_list)
+        average_std_list.append(best_std)
+        
+    std_mean = np.mean(average_std_list) # Average of the standard deviation of the initial weights for an average performance and for a particular number of input neurons over Multiple Samples
+    std_std = np.std(average_std_list) # standard deviation of the standard deviation of the initial weights for an average performance and for a particular number of input neurons over Multiple Samples
     std_mean_graph.append(std_mean)
     std_std_graph.append(std_std)
 
@@ -102,7 +98,7 @@ ax.set_ylabel("Standard Deviation")
 ax.set_title("Standard Deviation vs. Number of Neurons in Input Layer")
 np.savetxt('std_mean.csv', std_mean_graph, delimiter=',')
 np.savetxt('std_std.csv', std_std_graph, delimiter=',')
-plt.show()
+fig.savefig("StdVs.NumberofNeurons.png")
 
 final_time_for_now = datetime.now()
  

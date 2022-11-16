@@ -13,10 +13,11 @@ class SNN():
     def __init__(self, device, dtype, **kwargs):
         self.batch_size = kwargs['batch_size']
         
-        self.weight_scale = 7*(1.0-kwargs['beta']) # this should give us some spikes to begin with
+        self.weight_scale = 7*(1-kwargs['beta'])# this should give us some spikes to begin with
+
         
         self.w1 = torch.empty((kwargs['nb_inputs'], kwargs['nb_hidden']),  device=device, dtype=dtype, requires_grad=True)
-        
+
         self.w2 = torch.empty((kwargs['nb_hidden'], kwargs['nb_outputs']), device=device, dtype=dtype, requires_grad=True)        
 
     def spike_fn(self, x):
@@ -69,6 +70,7 @@ class SNN():
         return out_rec, other_recs
     
     def init_train(self, **kwargs):
+        torch.manual_seed(kwargs['sample'])
         torch.nn.init.normal_(self.w1, mean=0.0, std=self.weight_scale/np.sqrt(kwargs['nb_inputs']))
         torch.nn.init.normal_(self.w2, mean=0.0, std=self.weight_scale/np.sqrt(kwargs['nb_hidden']))
         params = [self.w1,self.w2] # The paramters we want to optimize
