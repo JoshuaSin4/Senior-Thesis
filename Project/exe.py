@@ -36,10 +36,10 @@ prob = freq*time_step # Probability
 epoch = 1000
 average_std_list = []
 std_average_list = []
-betas = np.arange(0, 1,0.2)
+betas = np.arange(0, 1,0.1)
 sample_list = int(sys.argv[1])
 sampling = np.arange(0, 10*sample_list, 10)
-nb_list = np.arange(80,401, 100)
+nb_list = np.arange(100,500, 100)
 std_mean_graph = []
 std_std_graph = []
 
@@ -92,13 +92,13 @@ for nb_inputs in nb_list:
 # Plotting and Save 
 fig, ax = plt.subplots()
 ax.plot(nb_list, std_mean_graph, marker = "o", color = "b")
-ax.errorbar(nb_list, std_mean_graph, yerr=std_std_graph, fmt="o", color="r")
+ax.errorbar(nb_list, std_mean_graph, yerr=std_std_graph, capsize = 1.0, fmt="o", color="k")
 ax.set_xlabel("Number of Neurons in Input Layer")
 ax.set_ylabel("Standard Deviation")
 ax.set_title("Standard Deviation vs. Number of Neurons in Input Layer")
 np.savetxt('std_mean.csv', std_mean_graph, delimiter=',')
 np.savetxt('std_std.csv', std_std_graph, delimiter=',')
-fig.savefig("StdVs.NumberofNeurons.png")
+fig.savefig("StdVs.NumberofNeurons20samples.png")
 
 final_time_for_now = datetime.now()
  

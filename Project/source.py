@@ -24,7 +24,34 @@ class SNN():
         out = torch.zeros_like(x)
         out[x > 0] = 1.0
         return out
+        
+    def run_snn1(self, inputs, device, dtype, **kwargs):
+        h1 = torch.einsum("abc,cd->abd", (inputs, self.w1))
+        syn = torch.zeros((kwargs['batch_size'],kwargs['nb_hidden']), device=device, dtype=dtype)
+        mem = torch.zeros((kwargs['batch_size'],kwargs['nb_hidden']), device=device, dtype=dtype)
 
+        mem_rec = []
+        spk_rec = []
+
+        # Compute hidden layer activity
+        for t in range(kwargs['nb_steps']):
+            mthr = mem-1.0
+            out = self.spike_fn(mthr)
+            rst = out.detach() # We do not want to backprop through the reset
+
+            new_syn = kwargs['alpha']*syn +h1[:,t]
+            new_mem = (kwargs['beta']*mem +syn)*(1.0-rst)
+
+            mem_rec.append(mem)
+            spk_rec.append(out)
+            
+            mem = new_mem
+            syn = new_syn
+
+        mem_rec = torch.stack(mem_rec,dim=1)
+        spk_rec = torch.stack(spk_rec,dim=1)
+        return mem_rec, spk_rec
+    
     def run_snn(self, inputs, device, dtype, **kwargs):
         h1 = torch.einsum("abc,cd->abd", (inputs, self.w1))
         syn = torch.zeros((kwargs['batch_size'],kwargs['nb_hidden']), device=device, dtype=dtype)
@@ -72,6 +99,7 @@ class SNN():
     def init_train(self, **kwargs):
         torch.manual_seed(kwargs['sample'])
         torch.nn.init.normal_(self.w1, mean=0.0, std=self.weight_scale/np.sqrt(kwargs['nb_inputs']))
+        torch.manual_seed(kwargs['sample'])
         torch.nn.init.normal_(self.w2, mean=0.0, std=self.weight_scale/np.sqrt(kwargs['nb_hidden']))
         params = [self.w1,self.w2] # The paramters we want to optimize
         optimizer = torch.optim.Adam(params, lr=2e-3, betas=(0.9,0.999)) # The optimizer we are going to use
