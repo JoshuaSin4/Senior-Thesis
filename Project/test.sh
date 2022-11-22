@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python3 exe.py 10
+python3 exe-1datapoint.py

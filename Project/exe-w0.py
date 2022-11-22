@@ -24,36 +24,30 @@ wparams['nb_steps']  = 200
 wparams['nb_inputs']  = 1
 wparams['nb_hidden']  = 1
 wparams['nb_outputs'] = 0
-wparams['batch_size'] = 256
+wparams['batch_size'] = 1
 wparams['alpha']   = float(np.exp(-time_step/tau_syn))
 wparams['beta']    = float(np.exp(-time_step/tau_mem))    
-wparams['sample'] = 10
-
+wparams['sample'] = 1
 # Input Data
 freq = 5 # Firing Rate
 prob = freq*time_step # Probability
 
 mask = torch.rand((wparams['batch_size'],wparams['nb_steps'],wparams['nb_inputs']), device=device, dtype=dtype)
 x_data = torch.zeros((wparams['batch_size'],wparams['nb_steps'],wparams['nb_inputs']), device=device, dtype=dtype, requires_grad=False)
-x_data[mask<prob] = 1.0 # Tensor filled wit spikes
-y_data = torch.tensor(1*(np.random.rand(wparams['batch_size'])<0.5), device=device, dtype = torch.long)
+x_data[0,10,0] = 1.0
 
 snn = SNN(device, dtype, **wparams)
 
-# self.w1 = 0.1717 sample 42
-# self.w1 = 0.1653 sample 1
-# self.w1 = 0.1371 sample 1.8e19
-# self.w1 = 0.1527 sample 1.79e19
-# self.w1 = -0.1503 sample 10
-snn.weight_scale = 0.25
+snn.w1 = snn.w1 + float(sys.argv[1])
 
-
-optimizer = snn.init_train(**wparams)
+#optimizer = snn.init_train(**wparams)
 out_rec,spk_rec = snn.run_snn1(x_data, device, dtype, **wparams)
 
+print("Spike Recording")
 print(spk_rec.sum(axis=1))
+print("Output Recording")
+print(out_rec.sum(axis=1))
 
-print(snn.w1)
 final_time_for_now = datetime.now()
  
 # printing initial_date

@@ -15,10 +15,9 @@ class SNN():
         
         self.weight_scale = 7*(1-kwargs['beta'])# this should give us some spikes to begin with
 
-        
-        self.w1 = torch.empty((kwargs['nb_inputs'], kwargs['nb_hidden']),  device=device, dtype=dtype, requires_grad=True)
+        self.w1 = torch.zeros((kwargs['nb_inputs'], kwargs['nb_hidden']),  device=device, dtype=dtype, requires_grad=True)
 
-        self.w2 = torch.empty((kwargs['nb_hidden'], kwargs['nb_outputs']), device=device, dtype=dtype, requires_grad=True)        
+        self.w2 = torch.zeros((kwargs['nb_hidden'], kwargs['nb_outputs']), device=device, dtype=dtype, requires_grad=True)        
 
     def spike_fn(self, x):
         out = torch.zeros_like(x)

@@ -33,12 +33,12 @@ wparams['sample'] = 42
 freq = 5 # Firing Rate
 prob = freq*time_step # Probability
 
-epoch = 1000
+epoch = 500
 average_std_list = []
 std_average_list = []
-betas = np.arange(0, 1,0.1)
+betas = np.arange(0.4, 1,0.1)
 sample_list = int(sys.argv[1])
-sampling = np.arange(0, 10*sample_list, 10)
+sampling = np.arange(10000, 1e10*sample_list, 1e10)
 nb_list = np.arange(100,500, 100)
 std_mean_graph = []
 std_std_graph = []
@@ -46,13 +46,14 @@ std_std_graph = []
 # Main Loop
 for nb_inputs in nb_list:
     wparams['nb_inputs'] = nb_inputs
-    mask = torch.rand((wparams['batch_size'],wparams['nb_steps'],wparams['nb_inputs']), device=device, dtype=dtype)
-    x_data = torch.zeros((wparams['batch_size'],wparams['nb_steps'],wparams['nb_inputs']), device=device, dtype=dtype, requires_grad=False)
-    x_data[mask<prob] = 1.0 # Tensor filled wit spikes
-    y_data = torch.tensor(1*(np.random.rand(wparams['batch_size'])<0.5), device=device, dtype = torch.long)
+    
     # Finding the mean of std. dev. for one point
     for sample in sampling:
         wparams['sample'] = sample
+        mask = torch.rand((wparams['batch_size'],wparams['nb_steps'],wparams['nb_inputs']), device=device, dtype=dtype)
+        x_data = torch.zeros((wparams['batch_size'],wparams['nb_steps'],wparams['nb_inputs']), device=device, dtype=dtype, requires_grad=False)
+        x_data[mask<prob] = 1.0 # Tensor filled wit spikes
+        y_data = torch.tensor(1*(np.random.rand(wparams['batch_size'])<0.5), device=device, dtype = torch.long)
         snn = SNN(device, dtype, **wparams)
         snn.spike_fn = SurrGradSpike.apply
         std_list = []
