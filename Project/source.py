@@ -10,19 +10,16 @@ import torch.nn as nn
 
 
 class SNN():
-    def __init__(self, device, dtype, **kwargs):
+    def __init__(self, spk_fn, device, dtype, **kwargs):
         self.batch_size = kwargs['batch_size']
         
-        self.weight_scale = 7*(1-kwargs['beta'])# this should give us some spikes to begin with
+        self.weight_scale = 7*(1- kwargs['beta'])# this should give us some spikes to begin with
 
-        self.w1 = torch.zeros((kwargs['nb_inputs'], kwargs['nb_hidden']),  device=device, dtype=dtype, requires_grad=True)
+        self.w1 = torch.empty((kwargs['nb_inputs'], kwargs['nb_hidden']),  device=device, dtype=dtype, requires_grad=True)
 
-        self.w2 = torch.zeros((kwargs['nb_hidden'], kwargs['nb_outputs']), device=device, dtype=dtype, requires_grad=True)        
-
-    def spike_fn(self, x):
-        out = torch.zeros_like(x)
-        out[x > 0] = 1.0
-        return out
+        self.w2 = torch.empty((kwargs['nb_hidden'], kwargs['nb_outputs']), device=device, dtype=dtype, requires_grad=True)        
+    
+        self.spike_fn = spk_fn
         
     def run_snn1(self, inputs, device, dtype, **kwargs):
         h1 = torch.einsum("abc,cd->abd", (inputs, self.w1))
@@ -101,7 +98,7 @@ class SNN():
         torch.manual_seed(kwargs['sample'])
         torch.nn.init.normal_(self.w2, mean=0.0, std=self.weight_scale/np.sqrt(kwargs['nb_hidden']))
         params = [self.w1,self.w2] # The paramters we want to optimize
-        optimizer = torch.optim.Adam(params, lr=2e-3, betas=(0.9,0.999)) # The optimizer we are going to use
+        optimizer = torch.optim.Adam(params, lr=1e-3, betas=(0.9,0.999)) # The optimizer we are going to use
         return optimizer
         
 
@@ -149,4 +146,3 @@ class SurrGradSpike(torch.autograd.Function):
         grad_input = grad_output.clone()
         grad = grad_input/(SurrGradSpike.scale*torch.abs(input)+1.0)**2
         return grad
-    
