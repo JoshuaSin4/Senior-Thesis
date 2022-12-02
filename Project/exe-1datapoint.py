@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
-import sys
+import sys 
 
 ini_time_for_now = datetime.now()
  
@@ -18,7 +18,7 @@ time_step = 1e-3
 tau_syn = 5e-3
 
 # Dictionary of Weight Parameters
-wparams = {}
+wparams = {}  
 wparams['nb_steps']  = 200
 wparams['nb_inputs']  = 70
 wparams['nb_hidden']  = 4
@@ -43,7 +43,11 @@ spike_fn = SurrGradSpike.apply
 
 # List of Items for Loop
 epoch = 1000
+<<<<<<< HEAD
+tau_mems = np.arange(1e-4, 0.1, 3e-4)
+=======
 tau_mems = np.arange(1e-4,  1e-2, 1e-4)
+>>>>>>> 2172306cec5d3b65c9e0c2a5572e642468dff92c
 acc_list = []
 std_w1_list = []
 std_w2_list = []
@@ -91,7 +95,11 @@ data["std_w1_list"]=np.append(std_w1_list, data["std_w1_list"])
 data["std_w2_list"]=np.append(std_w2_list, data["std_w2_list"])
 data["sample_list"]=np.append(wparams['sample'] ,data["sample_list"])
 
+<<<<<<< HEAD
+np.savez("input100sample50",**data)
+=======
 np.savez("input50sample70",**data)
+>>>>>>> 2172306cec5d3b65c9e0c2a5572e642468dff92c
 
 '''
 data = np.load("result50sample50.npz")
@@ -100,7 +108,11 @@ data["acc_list"] =np.append(np.max(acc_list),data["acc_list"])
 data["std_w1_list"]=np.append(best_std_w1, data["std_w1_list"])
 data["std_w2_list"]=np.append(best_std_w2, data["std_w2_list"])
 data["sample_list"]=np.append(wparams['sample'] ,data["sample_list"])
+<<<<<<< HEAD
+np.savez("result50",**data)
+=======
 np.savez("result200",**data)
+>>>>>>> 2172306cec5d3b65c9e0c2a5572e642468dff92c
 '''
 final_time_for_now = datetime.now()
  
