@@ -12,15 +12,15 @@ ini_time_for_now = datetime.now()
 print ('initial_date:', str(ini_time_for_now))
 
 dtype = torch.float
-device = torch.device("cpu")
+device = torch.device("cuda")
 
 time_step = 1e-3
 tau_syn = 5e-3
 
 # Dictionary of Weight Parameters
 wparams = {}
-wparams['nb_steps']  = 250
-wparams['nb_inputs']  = 200
+wparams['nb_steps']  = 200
+wparams['nb_inputs']  = 250
 wparams['nb_hidden']  = 4
 wparams['nb_outputs'] = 2
 wparams['batch_size'] = 256
