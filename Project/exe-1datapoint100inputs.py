@@ -43,7 +43,6 @@ spike_fn = SurrGradSpike.apply
 
 # List of Items for Loop
 epoch = 1000
-tau_mems = np.arange(1e-4,  1e-2, 2e-4)
 sample_list = np.arange(50,150, int(sys.argv[1]))
 
 # Main Loop
@@ -53,8 +52,7 @@ for sample in sample_list:
     std_w1_list = []
     std_w2_list = []
     
-    for tau in tau_mems: 
-        wparams['beta'] = float(np.exp(-time_step/tau))  
+    for tau in tau_mems:  
         # Instantiating SNN model and Using Surrogate Gradients
         snn = SNN(spike_fn,device, dtype, **wparams)
         optimizer = snn.init_train(**wparams)
