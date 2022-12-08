@@ -1,7 +1,6 @@
 # ---> Python
 # Klein defined
 *.pyc
-*.npz
 *.out 
 job.sh
 result*
