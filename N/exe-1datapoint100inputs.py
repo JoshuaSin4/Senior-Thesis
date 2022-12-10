@@ -44,19 +44,18 @@ spike_fn = SurrGradSpike.apply
 # List of Items for Loop
 epoch = 1000
 sample_list = np.arange(50,150, int(sys.argv[1]))
-grid_std_w1 = np.arange(0, 1, 0.2)
-grid_std_w2 = np.arange(0, 1, 0.2)
+axis_std_w1 = np.arange(0, 1, 0.2)
+axis_std_w2 = np.arange(0, 1, 0.2)
+grid_w1_w2 = np.meshgrid(axis_std_w1, axis_std_w2)
 
 # Main Loop
 for sample in sample_list:
+
     wparams['sample'] = sample
+    accuracy_matrix_w1_w2 = np.zeros((len(axis_std_w1),len(axis_std_w2)))
+    for (i,std_w1) in zip(len(axis_std_w1),axis_std_w1):
 
-    for std_w1 in grid_std_w1:
-        acc_list = []
-        std_w1_list = []
-        std_w2_list = []
-
-        for std_w2 in grid_std_w2:
+        for (j,std_w2) in zip(len(axis_std_w2), axis_std_w2):
             # Instantiating SNN model and Using Surrogate Gradients
             snn = SNN(spike_fn,time_step, tau_syn, tau_mem,device, dtype, **wparams)
             optimizer = snn.init_train(std_w1,std_w2,**wparams)
@@ -76,39 +75,13 @@ for sample in sample_list:
                 loss_hist.append(loss_val.item())
                 
             accuracy = snn.print_classification_accuracy(x_data, y_data, device, dtype, **wparams)
-            acc_list.append(accuracy)
-            std_w1_list.append(std_w1)
-            std_w2_list.append(std_w2)
+            accuracy_matrix_w1_w2[i][j] = accuracy/100
+            
+    data = {}
+    data['grid_w1_w2'] = grid_w1_w2
+    data['accuracy_w1_w2'] = accuracy_matrix_w1_w2
+    np.savez("input{}sample{}.npz".format(wparams['nb_inputs'],sample),**data)
 
-            data={}
-            sample_acc_list=[]
-            sample_std_w1_list=[]
-            sample_std_w2_list = []
-            sample_list = []
-            nb_inputs = []
-            data['acc_list']=sample_acc_list
-            data['std_w1_list']=sample_std_w1_list
-            data['std_w2_list']=sample_std_w2_list
-            data['sample_list']=sample_list
-            data['nb_list'] = nb_inputs
-
-            data['acc_list']=np.append(acc_list, data['acc_list'])
-            data["std_w1_list"]=np.append(std_w1_list, data["std_w1_list"])
-            data["std_w2_list"]=np.append(std_w2_list, data["std_w2_list"])
-            data["sample_list"]=np.append(wparams['sample'] ,data["sample_list"])
-            data["nb_inputs"]=np.append(wparams['nb_inputs'] ,data["nb_list"])
-
-            np.savez("input{}sample{}std_w1{}std_w2{}.npz".format(wparams['nb_inputs'],sample, std_w1, std_w2),**data)
-        
-'''
-data = np.load("result50sample50.npz")
-data = dict(data)
-data["acc_list"] =np.append(np.max(acc_list),data["acc_list"])
-data["std_w1_list"]=np.append(best_std_w1, data["std_w1_list"])
-data["std_w2_list"]=np.append(best_std_w2, data["std_w2_list"])
-data["sample_list"]=np.append(wparams['sample'] ,data["sample_list"])
-np.savez("result200",**data)
-'''
 final_time_for_now = datetime.now()
  
 # printing initial_date
