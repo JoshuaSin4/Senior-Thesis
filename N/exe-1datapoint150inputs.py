@@ -21,7 +21,7 @@ tau_syn = 5e-3
 # Dictionary of Weight Parameters
 wparams = {}
 wparams['nb_steps']  = 200
-wparams['nb_inputs']  = 50
+wparams['nb_inputs']  = 150
 wparams['nb_hidden']  = 4
 wparams['nb_outputs'] = 2
 wparams['batch_size'] = 256
@@ -46,7 +46,7 @@ epoch = 1000
 sample_list = np.arange(50,150, int(sys.argv[1]))
 axis_std_w1 = np.arange(0, 1, 0.1)
 axis_std_w2 = np.arange(0, 1, 0.1)
-std_w1_axis, std_w2_axis = np.meshgrid(axis_std_w1, axis_std_w2)
+grid_w1_w2 = np.meshgrid(axis_std_w1, axis_std_w2)
 
 # Main Loop
 for sample in sample_list:
@@ -75,11 +75,10 @@ for sample in sample_list:
                 loss_hist.append(loss_val.item())
                 
             accuracy = snn.print_classification_accuracy(x_data, y_data, device, dtype, **wparams)
-            accuracy_matrix_w1_w2[i][j] = accuracy/100
+            accuracy_matrix_w1_w2[i][j] = accuracy
             
     data = {}
-    data['grid_w1'] = std_w1_axis
-    data['grid_w2'] = std_w2_axis
+    data['grid_w1_w2'] = grid_w1_w2
     data['accuracy_w1_w2'] = accuracy_matrix_w1_w2
     np.savez("input{}sample{}.npz".format(wparams['nb_inputs'],sample),**data)
 

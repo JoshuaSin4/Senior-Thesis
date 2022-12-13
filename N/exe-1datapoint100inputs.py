@@ -44,8 +44,8 @@ spike_fn = SurrGradSpike.apply
 # List of Items for Loop
 epoch = 1000
 sample_list = np.arange(50,150, int(sys.argv[1]))
-axis_std_w1 = np.arange(0, 1, 0.2)
-axis_std_w2 = np.arange(0, 1, 0.2)
+axis_std_w1 = np.arange(0, 1, 0.1)
+axis_std_w2 = np.arange(0, 1, 0.1)
 grid_w1_w2 = np.meshgrid(axis_std_w1, axis_std_w2)
 
 # Main Loop
@@ -53,9 +53,9 @@ for sample in sample_list:
 
     wparams['sample'] = sample
     accuracy_matrix_w1_w2 = np.zeros((len(axis_std_w1),len(axis_std_w2)))
-    for (i,std_w1) in zip(len(axis_std_w1),axis_std_w1):
+    for (i,std_w1) in zip(range(len(axis_std_w1)),axis_std_w1):
 
-        for (j,std_w2) in zip(len(axis_std_w2), axis_std_w2):
+        for (j,std_w2) in zip(range(len(axis_std_w2)), axis_std_w2):
             # Instantiating SNN model and Using Surrogate Gradients
             snn = SNN(spike_fn,time_step, tau_syn, tau_mem,device, dtype, **wparams)
             optimizer = snn.init_train(std_w1,std_w2,**wparams)
@@ -75,7 +75,7 @@ for sample in sample_list:
                 loss_hist.append(loss_val.item())
                 
             accuracy = snn.print_classification_accuracy(x_data, y_data, device, dtype, **wparams)
-            accuracy_matrix_w1_w2[i][j] = accuracy/100
+            accuracy_matrix_w1_w2[i][j] = accuracy
             
     data = {}
     data['grid_w1_w2'] = grid_w1_w2
