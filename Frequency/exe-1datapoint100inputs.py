@@ -25,7 +25,7 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-tau_mem = 1e-3
+tau_mem = 10e-3
 tau_syn = 5e-3
 
 # Dictionary of Weight Parameters
@@ -95,8 +95,8 @@ for (i,std_w1) in zip(range(len(axis_std_w1)),axis_std_w1):
                 # Here we set up our regularizer loss
                 # The strength paramters here are merely a guess and there should be ample room for improvement by
                 # tuning these paramters.
-                reg_loss = 1e-6*torch.sum(spks) # L1 loss on total number of spikes
-                reg_loss += 1e-7*torch.mean(torch.sum(torch.sum(spks,dim=0),dim=0)**2) # L2 loss on spikes per neuron
+                reg_loss = 1e-7*torch.sum(spks) # L1 loss on total number of spikes
+                reg_loss += 1e-8*torch.mean(torch.sum(torch.sum(spks,dim=0),dim=0)**2) # L2 loss on spikes per neuron
                 
                 # Here we combine supervised loss and the regularizer
                 loss_val = loss_fn(log_p_y, y_local) + reg_loss
@@ -116,11 +116,11 @@ for (i,std_w1) in zip(range(len(axis_std_w1)),axis_std_w1):
             train_accuracy_matrix_w1_w2[i][j] = train_accuracy
             test_accuracy_matrix_w1_w2[i][j] = test_accuracy
             
-    data = {}
-    data['grid_w1_w2'] = grid_w1_w2
-    data['train_accuracy_w1_w2'] = train_accuracy_matrix_w1_w2
-    data['test_accuracy_w1_w2'] = test_accuracy_matrix_w1_w2
-    np.savez("std_w1{}std_w2{}.npz".format(std_w1,std_w2),**data)
+        data = {}
+        data['grid_w1_w2'] = grid_w1_w2
+        data['train_accuracy_w1_w2'] = train_accuracy_matrix_w1_w2
+        data['test_accuracy_w1_w2'] = test_accuracy_matrix_w1_w2
+        np.savez("std_w1{}std_w2{}.npz".format(std_w1,std_w2),**data)
 
 final_time_for_now = datetime.now()
  
