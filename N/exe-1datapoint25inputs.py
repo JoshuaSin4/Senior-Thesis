@@ -81,7 +81,7 @@ for sample in sample_list:
     data['grid_w1'] = std_w1_axis
     data['grid_w2'] = std_w2_axis
     data['accuracy_w1_w2'] = accuracy_matrix_w1_w2
-    np.savez("input{}sample{}.npz".format(wparams['nb_inputs'],sample),**data)
+    np.savez("input{}sample{}.npz".format(wparams['nb_inputs']),**data)
 
 final_time_for_now = datetime.now()
  
