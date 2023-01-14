@@ -9,9 +9,7 @@ import os
 from matplotlib.gridspec import GridSpec
 import seaborn as sns
 import torchvision
-
-
-
+ 
 ini_time_for_now = datetime.now()
  
 # printing initial_date
