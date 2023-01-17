@@ -11,7 +11,6 @@ import torch.nn as nn
 
 class SNN():
     def __init__(self, spk_fn, tau_syn, tau_mem, device, dtype, **kwargs):
-        self.batch_size = kwargs['batch_size']
         
         self.alpha   = float(np.exp(-kwargs['time_step']/tau_syn))  
         self.beta  = float(np.exp(-kwargs['time_step']/tau_mem))  
@@ -70,90 +69,58 @@ class SNN():
         return out_rec, other_recs
     
     def init_train(self, std_w1, std_w2, lr, **kwargs):
+        torch.manual_seed(kwargs['sample'])
         torch.nn.init.normal_(self.w1, mean=0.0, std=std_w1)
+        torch.manual_seed(kwargs['sample'])
         torch.nn.init.normal_(self.w2, mean=0.0, std=std_w2)
         params = [self.w1,self.w2] # The paramters we want to optimize
         optimizer = torch.optim.Adam(params, lr=lr, betas=(0.9,0.999)) # The optimizer we are going to use
         return optimizer
         
 
-    def compute_classification_accuracy(self, x_data, y_data, device, dtype, shuffle, **kwargs):
+    def compute_classification_accuracy(self,x_data, y_data, shuffle, device, dtype, **kwargs):
         """ Computes classification accuracy on supplied data in batches. """
         accs = []
-        for x_local, y_local in self.sparse_data_generator(x_data, y_data, device, shuffle, **kwargs):
-            output,_ = self.run_snn(x_local.to_dense(), device, dtype, **kwargs)
+        for x_local, y_local, average_rate_of_batch in self.images2spike(x_data, y_data, shuffle=shuffle, device=device, **kwargs):
+            output,_ = self.run_snn(x_local, device, dtype, **kwargs)
             m,_= torch.max(output,1) # max over time
             _,am=torch.max(m,1)      # argmax over output units
             tmp = np.mean((y_local==am).detach().cpu().numpy()) # compare to labels
             accs.append(tmp)
         return np.mean(accs)
     
-    def current2firing_time(self, x, tau, thr=0.2, tmax=1.0, epsilon=1e-7):
-        """ Computes first firing time latency for a current input x assuming the charge time of a current based LIF neuron.
-
-        Args:
-        x -- The "current" values
-
-        Keyword args:
-        tau -- The membrane time constant of the LIF neuron to be charged
-        thr -- The firing threshold value 
-        tmax -- The maximum time returned 
-        epsilon -- A generic (small) epsilon > 0
-
-        Returns:
-        Time to first spike for each "current" x
-        """
-        idx = x<thr
-        x = np.clip(x,thr+epsilon,1e9)
-        T = tau*np.log(x/(x-thr))
-        T[idx] = tmax
-        return T
- 
-
-    def sparse_data_generator(self, X, y, device, shuffle, **kwargs):
-        """ This generator takes datasets in analog format and generates spiking network input as sparse tensors. 
-
-        Args:
-            X: The data ( sample x event x 2 ) the last dim holds (time,neuron) tuples
-            y: The labels
-        """
-
+    def images2spike(self, x, y, shuffle, device, **kwargs):  
+        '''Converts images to spike trains'''
         labels_ = np.array(y,dtype=np.int64)
-        number_of_batches = len(X)//kwargs['batch_size']
-        sample_index = np.arange(len(X))
-
-        # compute discrete firing times
-        tau_eff = 20e-3/kwargs['time_step']
-        firing_times = np.array(self.current2firing_time(X, tau_eff, tmax=kwargs['nb_steps']), dtype=np.int64)
-        unit_numbers = np.arange(kwargs['nb_units'])
+        number_of_batches = len(x)//kwargs['batch_size']
+        sample_index = np.arange(len(x))
 
         if shuffle:
             np.random.shuffle(sample_index)
 
         total_batch_count = 0
         counter = 0
-        while counter<number_of_batches:
-            batch_index = sample_index[kwargs['batch_size']*counter:kwargs['batch_size']*(counter+1)]
 
-            coo = [ [] for i in range(3) ]
-            for bc,idx in enumerate(batch_index):
-                c = firing_times[idx]<kwargs['nb_steps']
-                times, units = firing_times[idx][c], unit_numbers[c]
+        batch_index = sample_index[kwargs['batch_size']*counter:kwargs['batch_size']*(counter+1)]
 
-                batch = [bc for _ in range(len(times))]
-                coo[0].extend(batch)
-                coo[1].extend(times)
-                coo[2].extend(units)
-
-            i = torch.LongTensor(coo).to(device)
-            v = torch.FloatTensor(np.ones(len(coo[0]))).to(device)
-        
-            X_batch = torch.sparse.FloatTensor(i, v, torch.Size((kwargs['batch_size'],kwargs['nb_steps'],kwargs['nb_units']))).to(device)
-            y_batch = torch.tensor(labels_[batch_index],device=device)
-
-            yield X_batch.to(device=device), y_batch.to(device=device)
+        while counter < number_of_batches:
+            average_rate = torch.empty(len(x[batch_index]))
+            x_batch = torch.empty((len(x[batch_index]), kwargs['nb_steps'], kwargs['nb_inputs'])).to(device)
+            for i, image in enumerate(x[batch_index]):
+                tensor_image = torch.Tensor(image)
+                average_rate[i] = torch.mean(tensor_image/kwargs['time_step'])
+                spike_train = torch.empty((kwargs['nb_steps'], kwargs['nb_inputs']))
+                for t in range(kwargs['nb_steps']):
+                    spike_t = torch.bernoulli(tensor_image)
+                    spike_train[t] = spike_t
+                x_batch[i] = spike_train
+            y_batch = torch.tensor(labels_[batch_index]) .to(device)
+            average_rate_of_batch = torch.mean(average_rate)
+            
+            yield x_batch,  y_batch, average_rate_of_batch
 
             counter += 1
+ 
 
 class SurrGradSpike(torch.autograd.Function):
     """
