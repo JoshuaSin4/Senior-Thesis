@@ -59,8 +59,8 @@ spike_fn = SurrGradSpike.apply
 
 # List of Items for Loop
 nb_epochs = 5
-axis_std_w1 = np.arange(0.001, 0.006, 0.001)
-axis_std_w2 = np.arange(0.001, 0.006, 0.001)
+axis_std_w1 = np.arange(0.01, 0.11, 0.01)
+axis_std_w2 = np.arange(0.01, 0.11, 0.01)
 grid_w1_w2 = np.meshgrid(axis_std_w1, axis_std_w2)
 
 lr = 1e-4
