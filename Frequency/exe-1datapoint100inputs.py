@@ -58,9 +58,9 @@ y_test  = np.array(test_dataset.targets, dtype=np.int64)
 spike_fn = SurrGradSpike.apply
 
 # List of Items for Loop
-nb_epochs = 10
-axis_std_w1 = np.arange(0.006, 0.01, 0.001)
-axis_std_w2 = np.arange(0.008, 0.01, 0.001)
+nb_epochs = 5
+axis_std_w1 = np.arange(0.001, 0.006, 0.001)
+axis_std_w2 = np.arange(0.001, 0.006, 0.001)
 grid_w1_w2 = np.meshgrid(axis_std_w1, axis_std_w2)
 
 lr = 1e-4
@@ -70,10 +70,10 @@ shuffle=True
 
 train_accuracy_matrix_w1_w2 = np.zeros((len(axis_std_w1),len(axis_std_w2)))
 test_accuracy_matrix_w1_w2 = np.zeros((len(axis_std_w1),len(axis_std_w2)))
-sample_list = np.arange(500,1500, int(sys.argv[1]))
-average_frequency = []
+sample_list = np.arange(1000,1100, int(sys.argv[1]))
 
 for sample in sample_list:
+    average_frequency = []
     wparams['sample'] = sample
     for (i,std_w1) in enumerate(axis_std_w1):
         for (j,std_w2) in enumerate(axis_std_w2):
@@ -119,6 +119,7 @@ for sample in sample_list:
     data['grid_w1_w2'] = grid_w1_w2
     data['train_accuracy_w1_w2'] = train_accuracy_matrix_w1_w2
     data['test_accuracy_w1_w2'] = test_accuracy_matrix_w1_w2
+    data['average_frequency'] = average_frequency
     np.savez("frequency{}sample{}.npz".format(average_frequency[-1],sample),**data)
 
 final_time_for_now = datetime.now()
