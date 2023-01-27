@@ -50,11 +50,9 @@ grid_w1_w2 = np.meshgrid(axis_std_w1, axis_std_w2)
 
 # Main Loop
 for sample in sample_list:
-
     wparams['sample'] = sample
     accuracy_matrix_w1_w2 = np.zeros((len(axis_std_w1),len(axis_std_w2)))
     for (i,std_w1) in zip(range(len(axis_std_w1)),axis_std_w1):
-
         for (j,std_w2) in zip(range(len(axis_std_w2)), axis_std_w2):
             # Instantiating SNN model and Using Surrogate Gradients
             snn = SNN(spike_fn,time_step, tau_syn, tau_mem,device, dtype, **wparams)
