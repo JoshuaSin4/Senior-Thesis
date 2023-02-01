@@ -78,13 +78,14 @@ class SNN():
         return optimizer
         
 
-    def compute_classification_accuracy(self,x_data, y_data, shuffle, device, dtype, **kwargs):
+    def compute_classification_accuracy(self, x_data, y_data, batch_size, shuffle, **kwargs):
         """ Computes classification accuracy on supplied data in batches. """
         accs = []
-        for x_local, y_local, average_rate_of_batch in self.images2spike(x_data, y_data, shuffle=shuffle, device=device, **kwargs):
-            output,_ = self.run_snn(x_local, device, dtype, **kwargs)
-            m,_= torch.max(output,1) # max over time
-            _,am=torch.max(m,1)      # argmax over output units
+        for x_local, y_local in self.images2spike(x_data, y_data, batch_size, shuffle=True, **kwargs):
+            output, _ = self.run_snn(x_local)
+            spike_count =torch.sum(output,1)
+            mean_firing_rate = spike_count/(kwargs['nb_steps']*kwargs['time_step'])
+            _, am = torch.max(mean_firing_rate, 1)
             tmp = np.mean((y_local==am).detach().cpu().numpy()) # compare to labels
             accs.append(tmp)
         return np.mean(accs)

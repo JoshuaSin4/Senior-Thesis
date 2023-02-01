@@ -31,7 +31,7 @@ wparams['nb_units']  = 28*28
 wparams['nb_hidden']  = 100
 wparams['nb_outputs'] = 10
 wparams['batch_size'] = 256
-wparams['time_step'] = 1e-3
+wparams['time_step'] = 2e-3
 
 
 # Input Data
@@ -63,7 +63,7 @@ axis_std_w1 = np.arange(0.01, 0.11, 0.01)
 axis_std_w2 = np.arange(0.01, 0.11, 0.01)
 grid_w1_w2 = np.meshgrid(axis_std_w1, axis_std_w2)
 
-lr = 1e-4
+lr = 2e-4
 scale = 1
 shuffle=True
 # Main Loop
@@ -120,7 +120,7 @@ for sample in sample_list:
     data['train_accuracy_w1_w2'] = train_accuracy_matrix_w1_w2
     data['test_accuracy_w1_w2'] = test_accuracy_matrix_w1_w2
     data['average_frequency'] = average_frequency
-    np.savez("frequency{}sample{}.npz".format(average_frequency[-1],sample),**data)
+    np.savez("frequency{}sample{}.npz".format(np.mean(average_frequency),sample),**data)
 
 final_time_for_now = datetime.now()
  
