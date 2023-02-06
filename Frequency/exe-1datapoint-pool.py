@@ -139,6 +139,7 @@ if __name__ == '__main__':
                 data['train_accuracy_w1_w2'] = train_accuracy_matrix_w1_w2
                 data['test_accuracy_w1_w2'] = test_accuracy_matrix_w1_w2
                 data['average_frequency'] = average_frequency
+                data['loss_hist'] = loss_hist
                 np.savez("frequency{}sample{}.npz".format(np.mean(average_frequency), sample),**data)
 
 final_time_for_now = datetime.now()
