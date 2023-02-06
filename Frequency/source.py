@@ -76,7 +76,8 @@ class SNN():
         params = [self.w1,self.w2] # The paramters we want to optimize
         optimizer = torch.optim.Adam(params, lr=lr, betas=(0.9,0.999)) # The optimizer we are going to use
         return optimizer
-        
+    
+       
 
     def compute_classification_accuracy(self, x_data, y_data, batch_size, shuffle, **kwargs):
         """ Computes classification accuracy on supplied data in batches. """
