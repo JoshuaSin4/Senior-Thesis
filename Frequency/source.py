@@ -12,10 +12,9 @@ import torch.nn as nn
 class SNN():
     def __init__(self, spk_fn, tau_syn, tau_mem, device, dtype, **kwargs):
         
-        self.alpha   = float(np.exp(-kwargs['time_step']/tau_syn))  
+        self.alpha   = float(np.exp(-kwargs['time_step']/tau_syn)) 
+        
         self.beta  = float(np.exp(-kwargs['time_step']/tau_mem))  
-
-        self.weight_scale = 7*(1- self.beta)# this should give us some spikes to begin with
 
         self.w1 = torch.empty((kwargs['nb_inputs'], kwargs['nb_hidden']),  device=device, dtype=dtype, requires_grad=True)
 
@@ -79,14 +78,13 @@ class SNN():
     
        
 
-    def compute_classification_accuracy(self, x_data, y_data, batch_size, shuffle, **kwargs):
+    def compute_classification_accuracy(self, x_data, y_data,  shuffle, device, dtype, **kwargs):
         """ Computes classification accuracy on supplied data in batches. """
         accs = []
-        for x_local, y_local in self.images2spike(x_data, y_data, batch_size, shuffle=True, **kwargs):
-            output, _ = self.run_snn(x_local)
-            spike_count =torch.sum(output,1)
-            mean_firing_rate = spike_count/(kwargs['nb_steps']*kwargs['time_step'])
-            _, am = torch.max(mean_firing_rate, 1)
+        for x_local, y_local, average_rate_of_batch in self.images2spike(x_data, y_data,  shuffle, device, **kwargs):
+            output,_ = self.run_snn(x_local, device, dtype, **kwargs)
+            m,_= torch.max(output,1) # max over time
+            _,am=torch.max(m,1)      # argmax over output units
             tmp = np.mean((y_local==am).detach().cpu().numpy()) # compare to labels
             accs.append(tmp)
         return np.mean(accs)

@@ -9,7 +9,7 @@ import os
 from matplotlib.gridspec import GridSpec
 import seaborn as sns
 import torchvision
-from multiprocessing import Pool, freeze_support
+from multiprocessing import Pool
 from functools import partial
 
 ini_time_for_now = datetime.now()
@@ -73,7 +73,8 @@ lr = 2e-4
 scale = 1
 shuffle=True
 
-def train(sample_list, axis_std_w1=axis_std_w1, axis_std_w2=axis_std_w2, spike_fn=spike_fn, tau_syn=tau_syn, tau_mem=tau_mem,device=device, dtype=dtype, **wparams):
+
+def train(sample_list, axis_std_w1=axis_std_w1, axis_std_w2=axis_std_w2, spike_fn=spike_fn, tau_syn=tau_syn, tau_mem=tau_mem,device=device, dtype=dtype, shuffle=True, **wparams):
     
     wparams['sample'] = sample_list
     average_frequency = []
@@ -115,32 +116,32 @@ def train(sample_list, axis_std_w1=axis_std_w1, axis_std_w2=axis_std_w2, spike_f
                     print("Epoch %i: loss=%.5f"%(e+1,mean_loss))
                     loss_hist.append(mean_loss)
                         
-                train_accuracy = snn.compute_classification_accuracy(x_train, y_train, device=device, dtype=dtype, shuffle=shuffle, **wparams)
-                test_accuracy = snn.compute_classification_accuracy(x_test, y_test, device=device, dtype=dtype, shuffle=shuffle,   **wparams)
+                train_accuracy = snn.compute_classification_accuracy(x_train, y_train, device=device, shuffle=False, dtype=dtype,**wparams)
+                test_accuracy = snn.compute_classification_accuracy(x_test, y_test, device=device, shuffle=False,  dtype=dtype, **wparams)
 
                 train_accuracy_matrix_w1_w2[i][j] = train_accuracy
                 test_accuracy_matrix_w1_w2[i][j] = test_accuracy
-                
-    return train_accuracy_matrix_w1_w2, test_accuracy_matrix_w1_w2, average_frequency, loss_hist
+
+    return list(train_accuracy_matrix_w1_w2)
 # Main Loop
 
 
 sample_list = np.arange(1000,1100, float(sys.argv[1]))
 
 if __name__ == '__main__':
-    freeze_support()
-    
-    with Pool(10) as p:
-        map_train =partial(train, **wparams)
-        list_train_accuracy_matrix_w1_w2, list_test_accuracy_matrix_w1_w2, list_average_frequency, list_loss_hist =p.map(map_train, sample_list) # [()]
-        for train_accuracy_matrix_w1_w2, test_accuracy_matrix_w1_w2, average_frequency, sample, loss_hist in zip(list_train_accuracy_matrix_w1_w2, list_test_accuracy_matrix_w1_w2, list_average_frequency, sample_list, list_loss_hist):
-                data = {}
-                data['grid_w1_w2'] = grid_w1_w2
-                data['train_accuracy_w1_w2'] = train_accuracy_matrix_w1_w2
-                data['test_accuracy_w1_w2'] = test_accuracy_matrix_w1_w2
-                data['average_frequency'] = average_frequency
-                data['loss_hist'] = loss_hist
-                np.savez("frequency{}sample{}.npz".format(np.mean(average_frequency), sample),**data)
+    with Pool(processes = 10) as pool:
+        map_train = partial(train, **wparams)
+        print(map_train)
+        result= pool.map(map_train, sample_list.tolist()) # [()]
+        print(result)
+        '''for train_accuracy_matrix_w1_w2, test_accuracy_matrix_w1_w2, average_frequency, sample, loss_hist in zip(list_train_accuracy_matrix_w1_w2, list_test_accuracy_matrix_w1_w2, list_average_frequency, sample_list, list_loss_hist):
+            data = {}
+            data['grid_w1_w2'] = grid_w1_w2
+            data['train_accuracy_w1_w2'] = train_accuracy_matrix_w1_w2
+            data['test_accuracy_w1_w2'] = test_accuracy_matrix_w1_w2
+            data['average_frequency'] = average_frequency
+            data['loss_hist'] = loss_hist
+            np.savez("frequency{}sample{}.npz".format(np.mean(average_frequency), sample),**data)'''
 
 final_time_for_now = datetime.now()
  
