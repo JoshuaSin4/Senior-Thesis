@@ -122,7 +122,7 @@ def train(sample_list, axis_std_w1=axis_std_w1, axis_std_w2=axis_std_w2, spike_f
                 train_accuracy_matrix_w1_w2[i][j] = train_accuracy
                 test_accuracy_matrix_w1_w2[i][j] = test_accuracy
 
-    return list(train_accuracy_matrix_w1_w2)
+    return train_accuracy_matrix_w1_w2.tolist(), test_accuracy_matrix_w1_w2.tolist(), average_frequency, loss_hist
 # Main Loop
 
 
@@ -131,17 +131,16 @@ sample_list = np.arange(1000,1100, float(sys.argv[1]))
 if __name__ == '__main__':
     with Pool(processes = 10) as pool:
         map_train = partial(train, **wparams)
-        print(map_train)
         result= pool.map(map_train, sample_list.tolist()) # [()]
-        print(result)
-        '''for train_accuracy_matrix_w1_w2, test_accuracy_matrix_w1_w2, average_frequency, sample, loss_hist in zip(list_train_accuracy_matrix_w1_w2, list_test_accuracy_matrix_w1_w2, list_average_frequency, sample_list, list_loss_hist):
+        list_train_accuracy_matrix_w1_w2, list_test_accuracy_matrix_w1_w2, list_average_frequency, sample_list, list_loss_hist = list(result)
+        for train_accuracy_matrix_w1_w2, test_accuracy_matrix_w1_w2, average_frequency, sample, loss_hist in zip(list_train_accuracy_matrix_w1_w2, list_test_accuracy_matrix_w1_w2, list_average_frequency, sample_list, list_loss_hist):
             data = {}
             data['grid_w1_w2'] = grid_w1_w2
             data['train_accuracy_w1_w2'] = train_accuracy_matrix_w1_w2
             data['test_accuracy_w1_w2'] = test_accuracy_matrix_w1_w2
             data['average_frequency'] = average_frequency
             data['loss_hist'] = loss_hist
-            np.savez("frequency{}sample{}.npz".format(np.mean(average_frequency), sample),**data)'''
+            np.savez("normal-distribution-frequency-{}-sample{}.npz".format(np.mean(average_frequency), sample),**data)
 
 final_time_for_now = datetime.now()
  
