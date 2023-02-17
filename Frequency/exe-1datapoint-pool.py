@@ -1,8 +1,9 @@
+import torch
+import torch.nn as nn
+torch.set_num_threads(1)
 from source import SNN, SurrGradSpike
 from datetime import datetime, timedelta
 import numpy as np
-import torch
-import torch.nn as nn
 import matplotlib.pyplot as plt
 import sys
 import os
@@ -22,7 +23,7 @@ print ('initial_date:', str(ini_time_for_now))
 dtype = torch.float
 
 # Check whether a GPU is available
-device = torch.device("cuda")     
+device = torch.device("cpu")     
 
 tau_mem = 10e-3
 tau_syn = 5e-3
@@ -65,8 +66,8 @@ y_test  = np.array(test_dataset.targets, dtype=np.int64)
 
 # List of Items for Loop
 nb_epochs = 5
-axis_std_w1 = np.arange(0.01, 0.11, 0.01)
-axis_std_w2 = np.arange(0.01, 0.11, 0.01)
+axis_std_w1 = np.arange(0.01, 1, 0.01)
+axis_std_w2 = np.arange(0.01, 1, 0.01)
 grid_w1_w2 = np.meshgrid(axis_std_w1, axis_std_w2)
 
 lr = 2e-4
@@ -75,7 +76,7 @@ shuffle=True
 
 
 def train(sample_list, axis_std_w1=axis_std_w1, axis_std_w2=axis_std_w2, spike_fn=spike_fn, tau_syn=tau_syn, tau_mem=tau_mem,device=device, dtype=dtype, shuffle=True, **wparams):
-    
+    print("train is running.")
     wparams['sample'] = sample_list
     average_frequency = []
     train_accuracy_matrix_w1_w2 = np.zeros((len(axis_std_w1),len(axis_std_w2)))
@@ -96,7 +97,7 @@ def train(sample_list, axis_std_w1=axis_std_w1, axis_std_w2=axis_std_w2, spike_f
                         _,spks=recs
                         m,_=torch.max(output,1)
                         log_p_y = log_softmax_fn(m)
-                        
+                    
                         # Here we set up our regularizer loss
                         # The strength paramters here are merely a guess and there should be ample room for improvement by
                         # tuning these paramters.
@@ -111,7 +112,7 @@ def train(sample_list, axis_std_w1=axis_std_w1, axis_std_w2=axis_std_w2, spike_f
                         optimizer.step()
                         local_loss.append(loss_val.item())
                         average_frequency.append(average_rate_of_batch)
-
+                        
                     mean_loss = np.mean(local_loss)
                     print("Epoch %i: loss=%.5f"%(e+1,mean_loss))
                     loss_hist.append(mean_loss)
@@ -122,15 +123,20 @@ def train(sample_list, axis_std_w1=axis_std_w1, axis_std_w2=axis_std_w2, spike_f
                 train_accuracy_matrix_w1_w2[i][j] = train_accuracy
                 test_accuracy_matrix_w1_w2[i][j] = test_accuracy
 
+<<<<<<< HEAD
     return train_accuracy_matrix_w1_w2.tolist(), test_accuracy_matrix_w1_w2.tolist(), average_frequency, loss_hist
+=======
+    return train_accuracy_matrix_w1_w2, test_accuracy_matrix_w1_w2, average_frequency, loss_hist
+>>>>>>> 82801127ffa855bfe788f3df97e5c3225457f2a7
 # Main Loop
 
 
 sample_list = np.arange(1000,1100, float(sys.argv[1]))
 
 if __name__ == '__main__':
-    with Pool(processes = 10) as pool:
+    with Pool() as pool:
         map_train = partial(train, **wparams)
+<<<<<<< HEAD
         result= pool.map(map_train, sample_list.tolist()) # [()]
         list_train_accuracy_matrix_w1_w2, list_test_accuracy_matrix_w1_w2, list_average_frequency, sample_list, list_loss_hist = list(result)
         for train_accuracy_matrix_w1_w2, test_accuracy_matrix_w1_w2, average_frequency, sample, loss_hist in zip(list_train_accuracy_matrix_w1_w2, list_test_accuracy_matrix_w1_w2, list_average_frequency, sample_list, list_loss_hist):
@@ -141,6 +147,18 @@ if __name__ == '__main__':
             data['average_frequency'] = average_frequency
             data['loss_hist'] = loss_hist
             np.savez("normal-distribution-frequency-{}-sample{}.npz".format(np.mean(average_frequency), sample),**data)
+=======
+        result= pool.map(map_train, sample_list) # [()]
+        samples = np.array(result)
+        for i, sample in enumerate(samples):
+            data = {}
+            data['grid_w1_w2'] = grid_w1_w2
+            data['train_accuracy_w1_w2'] = sample[0]
+            data['test_accuracy_w1_w2'] = sample[1]
+            data['average_frequency'] = sample[2]
+            data['loss_hist'] = sample[3]
+            np.savez("normal-distribution-frequency-{}-sample-{}.npz".format(np.mean(sample[2]), i),**data)
+>>>>>>> 82801127ffa855bfe788f3df97e5c3225457f2a7
 
 final_time_for_now = datetime.now()
  
