@@ -21,7 +21,7 @@ print ('initial_date:', str(ini_time_for_now))
 dtype = torch.float
 
 # Check whether a GPU is available
-device = torch.device("cpu")     
+device = torch.device("cuda")     
 
 tau_mem = 10e-3
 tau_syn = 5e-3
@@ -31,7 +31,7 @@ wparams = {}
 wparams['nb_steps']  = 100
 wparams['nb_inputs']  = 28*28
 wparams['nb_units']  = 28*28
-wparams['nb_hidden']  = 500
+wparams['nb_hidden']  = 100
 wparams['nb_outputs'] = 10
 wparams['batch_size'] = 256
 wparams['time_step'] = 2e-3
@@ -64,8 +64,8 @@ y_test  = np.array(test_dataset.targets, dtype=np.int64)
 
 # List of Items for Loop
 nb_epochs = 5
-axis_std_w1 = np.arange(0.005, 0.1, 0.015)
-axis_std_w2 = np.arange(0.005, 0.1, 0.015)
+axis_std_w1 = np.arange(0.06, 0.13, 0.01)
+axis_std_w2 = np.arange(0.06, 0.13, 0.01)
 grid_w1_w2 = np.meshgrid(axis_std_w1, axis_std_w2)
 
 lr = 2e-4
@@ -122,7 +122,7 @@ def train(sample, std_w1, std_w2, spike_fn=spike_fn, tau_syn=tau_syn, tau_mem=ta
 seed_list = np.arange(1000,1100, float(sys.argv[1]))
 
 if __name__ == '__main__':
-    with Pool(processes=60) as pool:
+    with Pool(processes=20) as pool:
         map_train = partial(train, **wparams)
         product = itertools.product(seed_list, axis_std_w1,axis_std_w2)
         
